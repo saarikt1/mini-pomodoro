@@ -23,7 +23,7 @@ html, body {
 }
 
 body {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
   display: flex;
@@ -47,9 +47,9 @@ body {
 /* ========== Timer Display ========== */
 .timer {
   font-size: clamp(56px, 20vw, 120px);
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
   text-shadow: 0 0 60px rgba(124, 138, 255, 0.1);
   line-height: 1;
   user-select: none;
@@ -57,9 +57,10 @@ body {
 
 /* ========== Status Label ========== */
 .status {
-  font-size: clamp(14px, 3vw, 18px);
+  font-size: clamp(12px, 2.5vw, 14px);
+  font-weight: 500;
   color: var(--text-muted);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-top: -32px;
   height: 24px;
