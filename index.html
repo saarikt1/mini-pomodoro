@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Pomodoro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="timer" id="timer">25:00</div>
+    <div class="status" id="status"></div>
+    <div class="buttons" id="buttons"></div>
+  </div>
+
+  <div class="counter">
+    <span class="counter-text" id="counter-text">0 Pomodoros done today</span>
+    <button class="counter-clear" id="counter-clear">Clear</button>
+  </div>
+
+  <script>
+    // ========== State ==========
+    const POMODORO_DURATION = 25 * 60; // 25 minutes in seconds
+    const BREAK_DURATION = 5 * 60;     // 5 minutes in seconds
+    const STORAGE_KEY = 'miniPomodoro';
+
+    let state = {
+      mode: 'idle',        // idle | running | paused | complete
+      type: 'pomodoro',    // pomodoro | break
+      timeRemaining: POMODORO_DURATION,
+      sessionsToday: 0,
+      lastUpdate: null
+    };
+
+    let timerInterval = null;
+    let audioContext = null;
+    let currentGainNode = null;
+
+    // ========== DOM Elements ==========
+    const timerEl = document.getElementById('timer');
+    const statusEl = document.getElementById('status');
+    const buttonsEl = document.getElementById('buttons');
+    const counterTextEl = document.getElementById('counter-text');
+    const counterClearEl = document.getElementById('counter-clear');
+
+    // ========== Initialization ==========
+    function init() {
+      loadState();
+      checkDayReset();
+      render();
+      counterClearEl.addEventListener('click', clearCounter);
+    }
+
+    // ========== Persistence ==========
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          state.sessionsToday = data.sessionsToday || 0;
+          state.lastUpdate = data.lastUpdate || null;
+        }
+      } catch (e) {
+        console.warn('Failed to load state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          sessionsToday: state.sessionsToday,
+          lastUpdate: new Date().toISOString()
+        }));
+      } catch (e) {
+        console.warn('Failed to save state:', e);
+      }
+    }
+
+    function checkDayReset() {
+      if (!state.lastUpdate) return;
+
+      const lastUpdate = new Date(state.lastUpdate);
+      const now = new Date();
+      
+      // Find the most recent 3 AM boundary
+      const today3AM = new Date(now);
+      today3AM.setHours(3, 0, 0, 0);
+      
+      // If it's before 3 AM today, use yesterday's 3 AM
+      const boundary = now < today3AM 
+        ? new Date(today3AM.getTime() - 24 * 60 * 60 * 1000)
+        : today3AM;
+
+      // If last update was before the boundary, reset
+      if (lastUpdate < boundary) {
+        state.sessionsToday = 0;
+        saveState();
+      }
+    }
+
+    // ========== Timer Logic ==========
+    function startTimer(type) {
+      fadeOutChime();
+      state.type = type;
+      state.timeRemaining = type === 'pomodoro' ? POMODORO_DURATION : BREAK_DURATION;
+      state.mode = 'running';
+      
+      timerInterval = setInterval(tick, 1000);
+      render();
+    }
+
+    function pauseTimer() {
+      state.mode = 'paused';
+      clearInterval(timerInterval);
+      timerInterval = null;
+      render();
+    }
+
+    function resumeTimer() {
+      state.mode = 'running';
+      timerInterval = setInterval(tick, 1000);
+      render();
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      state.mode = 'idle';
+      state.type = 'pomodoro';
+      state.timeRemaining = POMODORO_DURATION;
+      render();
+    }
+
+    function tick() {
+      state.timeRemaining--;
+      
+      if (state.timeRemaining <= 0) {
+        completeSession();
+      } else {
+        render();
+      }
+    }
+
+    function completeSession() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      state.mode = 'complete';
+      state.timeRemaining = 0;
+
+      // Only count completed pomodoros
+      if (state.type === 'pomodoro') {
+        state.sessionsToday++;
+        saveState();
+      }
+
+      playChime();
+      render();
+    }
+
+    // ========== Audio ==========
+    function playChime() {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const now = audioContext.currentTime;
+        const duration = 2;
+
+        // Create gain node for volume control
+        currentGainNode = audioContext.createGain();
+        currentGainNode.connect(audioContext.destination);
+        currentGainNode.gain.setValueAtTime(0.3, now);
+        currentGainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        // Fundamental tone (440Hz)
+        const osc1 = audioContext.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(440, now);
+        
+        const gain1 = audioContext.createGain();
+        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        
+        osc1.connect(gain1);
+        gain1.connect(currentGainNode);
+        osc1.start(now);
+        osc1.stop(now + duration);
+
+        // Overtone (880Hz)
+        const osc2 = audioContext.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now);
+        
+        const gain2 = audioContext.createGain();
+        gain2.gain.setValueAtTime(0.2, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        
+        osc2.connect(gain2);
+        gain2.connect(currentGainNode);
+        osc2.start(now);
+        osc2.stop(now + duration);
+
+        // Higher overtone for shimmer (1320Hz)
+        const osc3 = audioContext.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(1320, now);
+        
+        const gain3 = audioContext.createGain();
+        gain3.gain.setValueAtTime(0.1, now);
+        gain3.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.7);
+        
+        osc3.connect(gain3);
+        gain3.connect(currentGainNode);
+        osc3.start(now);
+        osc3.stop(now + duration);
+
+      } catch (e) {
+        console.warn('Failed to play chime:', e);
+      }
+    }
+
+    function fadeOutChime() {
+      if (currentGainNode && audioContext) {
+        try {
+          const now = audioContext.currentTime;
+          currentGainNode.gain.cancelScheduledValues(now);
+          currentGainNode.gain.setValueAtTime(currentGainNode.gain.value, now);
+          currentGainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        } catch (e) {
+          // Ignore - audio may have already stopped
+        }
+      }
+      currentGainNode = null;
+    }
+
+    // ========== Rendering ==========
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function render() {
+      // Timer display
+      timerEl.textContent = formatTime(state.timeRemaining);
+
+      // Status label
+      if (state.mode === 'paused') {
+        statusEl.textContent = state.type === 'break' ? 'Break paused' : 'Paused';
+      } else if (state.mode === 'running' && state.type === 'break') {
+        statusEl.textContent = 'Break';
+      } else if (state.mode === 'complete') {
+        statusEl.textContent = state.type === 'break' ? 'Break over' : 'Done';
+      } else {
+        statusEl.textContent = '';
+      }
+
+      // Buttons
+      renderButtons();
+
+      // Counter
+      const count = state.sessionsToday;
+      counterTextEl.textContent = `${count} Pomodoro${count === 1 ? '' : 's'} done today`;
+
+      // Tab title
+      updateTabTitle();
+    }
+
+    function renderButtons() {
+      buttonsEl.innerHTML = '';
+
+      if (state.mode === 'idle') {
+        addButton('Start Pomodoro', () => startTimer('pomodoro'), true);
+      } 
+      else if (state.mode === 'running') {
+        addButton('Pause', pauseTimer);
+      } 
+      else if (state.mode === 'paused') {
+        addButton('Continue', resumeTimer, true);
+        addButton('Reset', resetTimer, false, true);
+      } 
+      else if (state.mode === 'complete') {
+        if (state.type === 'pomodoro') {
+          addButton('5 minute break', () => startTimer('break'));
+          addButton('Start Pomodoro', () => startTimer('pomodoro'), true);
+        } else {
+          addButton('Start Pomodoro', () => startTimer('pomodoro'), true);
+        }
+      }
+    }
+
+    function addButton(text, onClick, primary = false, secondary = false) {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      if (primary) btn.classList.add('btn--primary');
+      if (secondary) btn.classList.add('btn--secondary');
+      btn.textContent = text;
+      btn.addEventListener('click', onClick);
+      buttonsEl.appendChild(btn);
+    }
+
+    function updateTabTitle() {
+      const time = formatTime(state.timeRemaining);
+      
+      if (state.mode === 'idle') {
+        document.title = 'Mini Pomodoro';
+      } 
+      else if (state.mode === 'running') {
+        document.title = state.type === 'break' ? `${time} Break` : time;
+      } 
+      else if (state.mode === 'paused') {
+        document.title = state.type === 'break' ? `${time} ⏸ Break` : `${time} ⏸`;
+      } 
+      else if (state.mode === 'complete') {
+        document.title = state.type === 'break' ? '✓ Break over' : '✓ Done';
+      }
+    }
+
+    // ========== Counter ==========
+    function clearCounter() {
+      state.sessionsToday = 0;
+      saveState();
+      render();
+    }
+
+    // ========== Start ==========
+    init();
+  </script>
+</body>
+</html>

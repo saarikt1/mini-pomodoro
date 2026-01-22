@@ -1,0 +1,194 @@
+/* Mini Pomodoro — Styles */
+
+/* ========== CSS Variables ========== */
+:root {
+  --bg: #0d0d0f;
+  --surface: #1a1a1f;
+  --text: #e8e8ea;
+  --text-muted: #6b6b70;
+  --accent: #7c8aff;
+  --accent-glow: rgba(124, 138, 255, 0.15);
+  --accent-hover: rgba(124, 138, 255, 0.25);
+}
+
+/* ========== Reset & Base ========== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== Container ========== */
+.container {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+/* ========== Timer Display ========== */
+.timer {
+  font-size: clamp(56px, 20vw, 120px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 60px rgba(124, 138, 255, 0.1);
+  line-height: 1;
+  user-select: none;
+}
+
+/* ========== Status Label ========== */
+.status {
+  font-size: clamp(14px, 3vw, 18px);
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: -32px;
+  height: 24px;
+}
+
+/* ========== Button Container ========== */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* ========== Buttons ========== */
+.btn {
+  font-family: inherit;
+  font-size: clamp(14px, 2.5vw, 16px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  border-radius: 100px;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  user-select: none;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  transform: scale(1.02);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.btn--primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn--secondary {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+}
+
+.btn--secondary:hover {
+  color: var(--text);
+}
+
+/* ========== Session Counter ========== */
+.counter {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: clamp(12px, 2vw, 14px);
+  color: var(--text-muted);
+}
+
+.counter-text {
+  letter-spacing: 0.05em;
+}
+
+.counter-clear {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 150ms ease-out;
+}
+
+.counter-clear:hover {
+  color: var(--text);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 400px) {
+  body {
+    padding: 16px;
+  }
+
+  .container {
+    gap: 32px;
+  }
+
+  .status {
+    margin-top: -20px;
+  }
+
+  .buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px 24px;
+  }
+
+  .counter {
+    bottom: 16px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* ========== Hidden utility ========== */
+.hidden {
+  display: none !important;
+}
