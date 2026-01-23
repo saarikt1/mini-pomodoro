@@ -167,12 +167,12 @@
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         const now = audioContext.currentTime;
-        const duration = 2;
+        const duration = 6;
 
         // Create gain node for volume control
         currentGainNode = audioContext.createGain();
         currentGainNode.connect(audioContext.destination);
-        currentGainNode.gain.setValueAtTime(0.3, now);
+        currentGainNode.gain.setValueAtTime(0.5, now);
         currentGainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         // Fundamental tone (440Hz)
@@ -181,7 +181,7 @@
         osc1.frequency.setValueAtTime(440, now);
         
         const gain1 = audioContext.createGain();
-        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.setValueAtTime(0.6, now);
         gain1.gain.exponentialRampToValueAtTime(0.001, now + duration);
         
         osc1.connect(gain1);
@@ -195,7 +195,7 @@
         osc2.frequency.setValueAtTime(880, now);
         
         const gain2 = audioContext.createGain();
-        gain2.gain.setValueAtTime(0.2, now);
+        gain2.gain.setValueAtTime(0.35, now);
         gain2.gain.exponentialRampToValueAtTime(0.001, now + duration);
         
         osc2.connect(gain2);
@@ -209,7 +209,7 @@
         osc3.frequency.setValueAtTime(1320, now);
         
         const gain3 = audioContext.createGain();
-        gain3.gain.setValueAtTime(0.1, now);
+        gain3.gain.setValueAtTime(0.2, now);
         gain3.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.7);
         
         osc3.connect(gain3);
