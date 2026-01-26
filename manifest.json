@@ -1,0 +1,19 @@
+{
+  "name": "Mini Pomodoro",
+  "short_name": "Pomodoro",
+  "description": "Ultra-minimalist Pomodoro timer",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "start_url": "/",
+  "scope": "/",
+  "theme_color": "#0d0d0f",
+  "background_color": "#0d0d0f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
