@@ -1,11 +1,13 @@
 // Mini Pomodoro Service Worker
-const CACHE_NAME = 'mini-pomodoro-v1';
+const CACHE_NAME = 'mini-pomodoro-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/icon.svg',
-  '/manifest.json'
+  './',
+  './index.html',
+  './styles.css',
+  './icon.svg',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // Install: cache assets
