@@ -33,11 +33,13 @@
     <button class="counter-clear" id="counter-clear">Clear</button>
   </div>
 
+  <script src="time-utils.js"></script>
   <script>
     // ========== State ==========
     const POMODORO_DURATION = 25 * 60; // 25 minutes in seconds
     const BREAK_DURATION = 5 * 60;     // 5 minutes in seconds
     const STORAGE_KEY = 'miniPomodoro';
+    const { shouldReset } = window.MiniPomodoroTime;
 
     let state = {
       mode: 'idle',        // idle | running | paused | complete
@@ -61,9 +63,14 @@
     // ========== Initialization ==========
     function init() {
       loadState();
-      checkDayReset();
+      maybeResetForNewDay();
       render();
       counterClearEl.addEventListener('click', clearCounter);
+
+      window.addEventListener('focus', maybeResetForNewDay);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) maybeResetForNewDay();
+      });
     }
 
     // ========== Persistence ==========
@@ -91,30 +98,16 @@
       }
     }
 
-    function checkDayReset() {
-      if (!state.lastUpdate) return;
-
-      const lastUpdate = new Date(state.lastUpdate);
-      const now = new Date();
-      
-      // Find the most recent 3 AM boundary
-      const today3AM = new Date(now);
-      today3AM.setHours(3, 0, 0, 0);
-      
-      // If it's before 3 AM today, use yesterday's 3 AM
-      const boundary = now < today3AM 
-        ? new Date(today3AM.getTime() - 24 * 60 * 60 * 1000)
-        : today3AM;
-
-      // If last update was before the boundary, reset
-      if (lastUpdate < boundary) {
-        state.sessionsToday = 0;
-        saveState();
-      }
+    function maybeResetForNewDay() {
+      if (!shouldReset(state.lastUpdate, new Date())) return;
+      state.sessionsToday = 0;
+      saveState();
+      render();
     }
 
     // ========== Timer Logic ==========
     function startTimer(type) {
+      maybeResetForNewDay();
       fadeOutChime();
       state.type = type;
       state.timeRemaining = type === 'pomodoro' ? POMODORO_DURATION : BREAK_DURATION;
