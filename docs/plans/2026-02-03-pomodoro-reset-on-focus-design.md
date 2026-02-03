@@ -13,6 +13,7 @@ The app already stores `sessionsToday` and `lastUpdate` in `localStorage` and re
 
 ## Proposed Approach (Recommended)
 - Replace `checkDayReset()` with a reusable helper `maybeResetForNewDay()`.
+- Extract the boundary logic into a tiny shared helper module so it can be tested with a simple Node script.
 - Call it in:
   - `init()`
   - `window` `focus` event
@@ -35,8 +36,9 @@ The app already stores `sessionsToday` and `lastUpdate` in `localStorage` and re
 - If `lastUpdate` is missing or invalid, no reset occurs.
 - If `localStorage` access fails, the app logs a warning and continues (existing behavior).
 
-## Testing (Manual)
+## Testing (Manual + Lightweight Script)
 - Set `lastUpdate` to before the boundary, reload, verify count resets.
 - Leave tab open past 3am, refocus, verify count resets without reload.
 - Start a pomodoro after boundary; verify counter resets first.
 - Verify no reset occurs if `lastUpdate` is after the boundary.
+- Add a tiny Node script test for boundary logic (no test framework required).
